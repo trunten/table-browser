@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arbor Universal Table Explorer</title>
+<style>
+  :root{
+    color-scheme:light dark;
+    --bg:#f4f6f8;--panel:#ffffff;--panel2:#f8fafc;--text:#172033;--muted:#667085;
+    --line:#dfe4ea;--accent:#315ea8;--accentSoft:#eaf0f8;--danger:#a53636;--warn:#8a6116;
+    --shadow:0 8px 28px rgba(16,24,40,.07);--radius:14px;
+    font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  @media(prefers-color-scheme:dark){:root{--bg:#11161d;--panel:#171d25;--panel2:#1d2530;--text:#eef2f6;--muted:#a8b3c2;--line:#2d3846;--accent:#83a9e3;--accentSoft:#1b2d47;--danger:#ef8f8f;--warn:#e7c57c;--shadow:0 8px 28px rgba(0,0,0,.25)}}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-size:14px}
+  button,input{font:inherit}.top{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--panel) 94%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .topin{max-width:1800px;margin:auto;padding:12px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .brand{font-weight:760;letter-spacing:-.02em;margin-right:auto}.status{font-size:12px;color:var(--muted)}
+  .savedRequestWrap{margin:0 0 14px}.savedRequestLabel{display:block;font-size:11px;color:var(--muted);font-weight:750;letter-spacing:.05em;text-transform:uppercase;margin:0 0 6px}.savedRequestControls{display:flex;align-items:center;gap:6px}.savedRequestControls select{width:100%;min-width:0;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:9px;padding:8px 30px 8px 10px;font:inherit}.savedRequestControls select:hover,.savedRequestControls select:focus{border-color:var(--accent);outline:none}.savedRequestRemove{width:36px;height:36px;flex:0 0 36px;display:inline-flex;align-items:center;justify-content:center;padding:0;font-size:18px;line-height:1}.savedRequestRemove:disabled{opacity:.35;cursor:default}
+  .btn{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:8px 11px;border-radius:9px;cursor:pointer}.btn:hover{border-color:var(--accent)}.btn.active{background:var(--accentSoft);border-color:color-mix(in srgb,var(--accent) 65%,var(--line));color:var(--accent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 12%,transparent)}.btn.primary{background:var(--accent);border-color:var(--accent);color:white}
+  main{max-width:1800px;margin:auto;padding:18px}.notice{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:12px 14px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .notice.error{border-color:color-mix(in srgb,var(--danger) 55%,var(--line));color:var(--danger)}.notice.warn{border-color:color-mix(in srgb,var(--warn) 55%,var(--line));color:var(--warn)}
+  .summary{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.pill{font-size:12px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 9px;color:var(--muted)}
+  .dataset{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin:0 0 18px;overflow:hidden}.dshead{padding:13px 15px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap}.dataset.collapsed .dshead{border-bottom:0}.dshead h2{font-size:16px;margin:0;letter-spacing:-.01em}.dsmeta{font-size:12px;color:var(--muted);margin-right:auto}.datasetBody{display:block}.dataset.collapsed .datasetBody{display:none}.search{min-width:200px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text)}.tableToggle{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}.tableToggle input{accent-color:var(--accent)}.collapseBtn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;padding:0;border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:8px;cursor:pointer;line-height:1}.collapseBtn:hover{color:var(--accent);border-color:var(--accent)}.collapseBtn .chev{width:16px;height:16px;display:block;flex:0 0 16px;transform-origin:50% 50%;transition:transform .16s ease}.collapseBtn .chev path{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.dataset.collapsed .collapseBtn .chev{transform:rotate(-90deg)}
+  .pager{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--panel2);font-size:12px;color:var(--muted)}.pager label{display:inline-flex;align-items:center;gap:6px}.pager select{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:8px;padding:5px 28px 5px 8px;font:inherit}.pager .pageInfo{min-width:110px;text-align:center;font-variant-numeric:tabular-nums}.pager .pageNav{width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;padding:0;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:8px;cursor:pointer;font-size:18px;line-height:1}.pager .pageNav:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}.pager .pageNav:disabled{opacity:.38;cursor:default}.pager .pageHint{margin-left:auto;color:var(--muted)}
+  .tablewrap{overflow:auto;max-height:72vh}.data{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0;font-size:12px}.data th,.data td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:7px 9px;vertical-align:top;max-width:460px;white-space:normal;overflow-wrap:anywhere}.data th{position:sticky;top:0;z-index:3;background:var(--panel2);text-align:left;font-weight:720;cursor:pointer;white-space:nowrap}.data th:hover{color:var(--accent)}.data tbody tr:hover td{background:color-mix(in srgb,var(--accentSoft) 55%,transparent)}
+  .type{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:650;margin-left:6px}.sortmark{margin-left:4px;color:var(--accent)}
+  .num{text-align:right;font-variant-numeric:tabular-nums}.bool{text-align:center}.empty{padding:24px;color:var(--muted)}.null{color:var(--muted)}
+  details.raw{margin:0 0 14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px}pre{white-space:pre-wrap;overflow:auto;max-height:50vh;font-size:11px;margin:10px 0 0}
+  .hiddenCol{display:none}.data td a{color:var(--accent);text-decoration:none;font-weight:650}.data td a:hover{text-decoration:underline}
+  .loadingPanel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);min-height:260px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--muted)}
+  .requestPrompt{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;max-width:980px;margin:28px auto}.requestPrompt h2{margin:0 0 6px;font-size:20px;letter-spacing:-.02em}.requestPrompt p{margin:0 0 14px;color:var(--muted);line-height:1.45}.requestPrompt textarea{width:100%;min-height:220px;resize:vertical;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);padding:12px;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;outline:none}.requestPrompt textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent)}.requestPrompt .fieldLabel{display:block;font-size:11px;color:var(--muted);font-weight:750;letter-spacing:.05em;text-transform:uppercase;margin:0 0 6px}.requestPrompt .customVarsInput{min-height:92px;margin-bottom:14px}.requestPrompt .requestInput{min-height:250px}.requestPrompt .customVarsHelp{font-size:12px;color:var(--muted);line-height:1.45;margin:-6px 0 14px}.requestPrompt .promptActions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px}.saveRequestToggle{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:13px;cursor:pointer}.saveRequestToggle input{accent-color:var(--accent)}.requestPrompt .promptHint{font-size:12px;color:var(--muted);margin-top:10px}.requestPrompt .promptError{font-size:12px;color:var(--danger);min-height:18px;margin-top:8px}
+  .spinner{width:36px;height:36px;border:4px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .modalBackdrop{position:fixed;inset:0;background:rgba(15,23,42,.46);z-index:100;display:none;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(2px)}.modalBackdrop.open{display:flex}
+  .modal{width:min(720px,100%);max-height:88vh;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 80px rgba(15,23,42,.24);display:flex;flex-direction:column;overflow:hidden}
+  .modalHead,.modalFoot{padding:13px 15px;display:flex;align-items:center;gap:10px}.modalHead{border-bottom:1px solid var(--line)}.modalFoot{border-top:1px solid var(--line);justify-content:flex-end;flex-wrap:wrap}.modalHead h2{font-size:16px;margin:0;margin-right:auto}.modalBody{padding:14px 15px;overflow:auto}.managerTop{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:14px}.managerLabel{font-size:11px;color:var(--muted);font-weight:750;letter-spacing:.05em;text-transform:uppercase}.datasetPicker{display:flex;gap:6px;flex-wrap:wrap}.datasetPick{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:9px;padding:7px 10px;cursor:pointer;font-weight:650;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.datasetPick:hover{border-color:var(--accent)}.datasetPick.active{background:var(--accentSoft);border-color:color-mix(in srgb,var(--accent) 60%,var(--line));color:var(--accent)}.managerHint{font-size:12px;color:var(--muted)}
+  .columnList{display:flex;flex-direction:column;gap:6px}.columnItem{display:grid;grid-template-columns:auto 28px 1fr auto;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:7px 8px}.columnItem.dragging{opacity:.45}.dragHandle{cursor:grab;color:var(--muted);font-size:16px;user-select:none}.columnName{min-width:0}.columnName strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.columnName small{display:block;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.moveBtns{display:flex;gap:4px}.mini{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:7px;padding:4px 7px;cursor:pointer}.mini:hover{border-color:var(--accent)}.savedNote{font-size:11px;color:var(--muted);margin-right:auto}
+  @media(max-width:700px){main{padding:10px}.topin{padding:10px}.search{min-width:140px;flex:1}.tablewrap{max-height:78vh}}
+</style>
+</head>
+<body>
+<header class="top"><div class="topin"><div class="brand">Arbor Universal Table Explorer</div><div id="status" class="status">Ready</div><button id="runBtn" class="btn primary">Refresh</button><button id="editQueryBtn" class="btn" hidden>Edit query</button><button id="newQueryBtn" class="btn" hidden>New query</button><button id="columnsBtn" class="btn">Columns</button><button id="rawBtn" class="btn" aria-pressed="false">Raw JSON</button></div></header>
+<main>
+  <div id="errors"></div><div id="summary" class="summary"></div><div id="tables"></div><details id="rawBox" class="raw" hidden><summary>Raw response</summary><pre id="raw"></pre></details>
+</main>
+<div id="columnModal" class="modalBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="columnManagerTitle">
+    <div class="modalHead"><h2 id="columnManagerTitle">Column manager</h2><button id="closeColumns" class="btn">Close</button></div>
+    <div class="modalBody">
+      <div class="managerTop"><div class="managerLabel">Table</div><div id="datasetPicker" class="datasetPicker"></div><div class="managerHint" id="columnHint">Toggle columns or drag them into a new order.</div></div>
+      <div id="columnList" class="columnList"></div>
+    </div>
+    <div class="modalFoot"><span class="savedNote" id="layoutSavedNote"></span><button id="resetLayout" class="btn">Reset</button><button id="saveLayout" class="btn primary">Save layout</button></div>
+  </div>
+</div>
+<script>
+/* ========================================================================
+   ONLY EDIT THIS BLOCK FOR MOST JOBS
+   ======================================================================== */
+const CONFIG = {
+  // When true, calls go through your Vercel CORS relay. Set false for direct API calls.
+  useProxy: true,
+  proxyUrl: 'https://cors-relay-wheat.vercel.app/api/proxy',
+  proxyTargetParam: 'x9q7m2z4k1',
+
+  // Basic Auth. Keep blank if the endpoint does not use Basic Auth.
+  // WARNING: credentials written here are visible to anyone who can read the HTML file.
+  username: 'broadway',
+  password: 'dpt_i7f9qcNoy6VyJwhWH8vao902ITRaZsS_orb31c3T6eA',
+
+  request: {
+    // Use a full URL. If this is blank and `query` is present, Arbor's GraphQL URL below is used.
+    url: '',
+    defaultGraphqlUrl: 'https://broadway-academy.uk.arbor.sc/graphql/query',
+
+    // AUTO = POST when query/body exists, otherwise GET.
+    method: 'AUTO',
+
+    // URL query parameters for normal REST calls. Arrays are appended as repeated parameters.
+    params: {},
+
+    // Put a GraphQL query here if you want this copy to run one automatically.
+    // Leave both `url` and `query` blank to show the paste/run screen instead.
+    query: ``,
+
+    // Explorer-side placeholders for the query or REST URL above. Use {{name}} in the
+    // request text. Dynamic values include @today, @now, @monday ... @sunday, with
+    // optional day offsets such as @today-7d, @friday-7d or @monday+14d.
+    customVariables: {},
+
+    // Genuine GraphQL variables, if an Arbor query supports them. customVariables are
+    // substituted by this explorer before the request is sent; these are sent to GraphQL.
+    variables: {},
+
+    // For a non-GraphQL POST/PUT/PATCH request, put the JSON body here.
+    body: null,
+
+    // Any extra upstream headers can go here.
+    headers: {}
+  },
+
+  // Exact path OR final field-name renames. Full-path matches win over leaf-name matches.
+  // Paths use dots, e.g. "coverRequirement.absentStaff.fullName".
+  columnRenames: {
+    narrative: 'Narrative',
+    incidentDatetime: 'Incident Date/Time'
+  },
+
+  // Columns matching these names/paths still exist but start hidden.
+  hiddenColumns: ['uniqueObjectId', 'entityType'],
+
+  // Arrays of objects become extra rows. Primitive arrays stay readable in one cell.
+  explodeObjectArrays: true,
+  primitiveArraySeparator: ', ',
+  maxExpandedRowsPerSourceRecord: 5000,
+
+  // Arbor GraphQL returns at most 3000 records for a field. If a top-level
+  // result contains exactly 3000 items, automatically request page_num 1, 2,
+  // 3... for that field until a shorter page is returned. This also works for
+  // multipart GraphQL queries: only datasets that hit the limit are appended.
+  pagination: {
+    autoGraphQL: true,
+    pageSize: 3000,
+    pageArgument: 'page_num',
+    maxPages: 100
+  },
+
+  // Optional one-off hook. Return the record you want flattened.
+  transformRecord(record, datasetName) { return record; },
+
+  runOnLoad: true
+};
+/* ====================================================================== */
+
+const $ = id => document.getElementById(id);
+const SOURCE_REQUEST_DEFINED = !!(String(CONFIG.request.url||'').trim() || String(CONFIG.request.query||'').trim());
+let lastResponse = null;
+let datasetStates = [];
+let currentRequestLayoutScope = 'unscoped';
+let runCustomVariablesSnapshot = null;
+const LAYOUT_STORE_KEY='arborUniversalTableExplorerLayoutsV3';
+const LEGACY_LAYOUT_KEY='arborUniversalTableExplorerLayoutV2';
+const LEGACY_TABLE_PREFS_KEY='arborUniversalTableExplorerTablePrefsV1';
+const MAX_SAVED_REQUEST_PROFILES=100;
+const SAVED_REQUESTS_KEY='arborUniversalTableExplorerSavedRequestsV1';
+let pendingSaveRequest=false;
+let activeSavedRequestId='';
+let activeManagerDataset = 0;
+
+function setStatus(text){ $('status').textContent = text; }
+function esc(v){ return String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function hasOwn(o,k){ return Object.prototype.hasOwnProperty.call(o,k); }
+function loadLayoutStore(){
+  try{
+    const parsed=JSON.parse(localStorage.getItem(LAYOUT_STORE_KEY)||'{}');
+    return parsed && typeof parsed==='object' && !Array.isArray(parsed) ? parsed : {};
+  }catch{return {};}
+}
+function pruneLayoutStore(store){
+  const keys=Object.keys(store||{});
+  if(keys.length<=MAX_SAVED_REQUEST_PROFILES) return store;
+  keys.sort((a,b)=>(Number(store[a]?.lastUsed)||0)-(Number(store[b]?.lastUsed)||0));
+  while(keys.length>MAX_SAVED_REQUEST_PROFILES){
+    const oldest=keys.shift();
+    if(oldest!==currentRequestLayoutScope) delete store[oldest];
+    else keys.push(oldest);
+  }
+  return store;
+}
+function saveLayoutStore(store){
+  try{localStorage.setItem(LAYOUT_STORE_KEY,JSON.stringify(pruneLayoutStore(store||{})));}catch{}
+}
+function datasetStorageKey(ds,index){ return String(ds.name||`Dataset ${index+1}`); }
+function getSavedDatasetState(ds,index){
+  const store=loadLayoutStore();
+  return store[currentRequestLayoutScope]?.datasets?.[datasetStorageKey(ds,index)] || null;
+}
+function touchCurrentLayoutProfile(){
+  const store=loadLayoutStore();
+  const profile=store[currentRequestLayoutScope];
+  if(!profile) return;
+  profile.lastUsed=Date.now();
+  saveLayoutStore(store);
+}
+function loadHideCompleted(ds,index){
+  return !!getSavedDatasetState(ds,index)?.hideCompleted;
+}
+function saveTablePreference(state,index){
+  const store=loadLayoutStore();
+  const profile=store[currentRequestLayoutScope] || {lastUsed:Date.now(),datasets:{}};
+  profile.datasets ||= {};
+  const key=datasetStorageKey(state.ds,index);
+  profile.datasets[key]={...(profile.datasets[key]||{}),hideCompleted:!!state.hideCompleted};
+  profile.lastUsed=Date.now();
+  store[currentRequestLayoutScope]=profile;
+  saveLayoutStore(store);
+}
+function getIdLinkKind(path){
+  const raw=String(path||'');
+  const parts=raw.toLowerCase().split('.').filter(Boolean);
+  const leaf=parts.at(-1)||'';
+  const compactLeaf=leaf.replace(/[_\-\s]/g,'');
+
+  // Explicit studentId / staffId fields are the two visible/linkable exceptions.
+  if(compactLeaf==='studentid') return 'student';
+  if(compactLeaf==='staffid') return 'staff';
+
+  // For ordinary nested .id fields, only treat the ID as a student/staff ID
+  // when the object immediately containing it is the student/staff object.
+  // e.g. student.id -> student, loggedByStaff.id -> staff,
+  // but student.academicLevel.id -> ordinary hidden ID.
+  if(leaf==='id'){
+    const parent=(parts.at(-2)||'').replace(/[_\-\s]/g,'');
+    if(parent==='student' || parent==='students') return 'student';
+    if(parent==='staff' || parent.endsWith('staff')) return 'staff';
+    return 'id';
+  }
+
+  // Other conventional *Id / *_id / *-id fields are ordinary IDs and hidden
+  // by default unless they matched the explicit student/staff cases above.
+  if(/id$/i.test(leaf)) return 'id';
+  return null;
+}
+function defaultHidden(path,ds){
+  if(shouldHide(path) || !!(ds?.emptyColumns?.has(path))) return true;
+  const kind=getIdLinkKind(path);
+  return kind==='id';
+}
+function applySavedLayout(state,index){
+  const saved=getSavedDatasetState(state.ds,index);
+  const all=[...state.ds.columns];
+  if(saved && Array.isArray(saved.order)){
+    const known=saved.order.filter(c=>all.includes(c));
+    const extra=all.filter(c=>!known.includes(c));
+    state.columnOrder=[...known,...extra];
+    state.hiddenCols=new Set((saved.hidden||[]).filter(c=>all.includes(c)));
+    for(const c of extra) if(defaultHidden(c,state.ds)) state.hiddenCols.add(c);
+  }else{
+    state.columnOrder=all;
+    state.hiddenCols=new Set(all.filter(c=>defaultHidden(c,state.ds)));
+  }
+}
+function saveLayouts(){
+  const store=loadLayoutStore();
+  const profile=store[currentRequestLayoutScope] || {lastUsed:Date.now(),datasets:{}};
+  profile.datasets ||= {};
+  datasetStates.forEach((state,index)=>{
+    const key=datasetStorageKey(state.ds,index);
+    profile.datasets[key]={...(profile.datasets[key]||{}),order:[...state.columnOrder],hidden:[...state.hiddenCols]};
+  });
+  profile.lastUsed=Date.now();
+  store[currentRequestLayoutScope]=profile;
+  saveLayoutStore(store);
+  $('layoutSavedNote').textContent='Saved';
+  setTimeout(()=>{if($('layoutSavedNote').textContent==='Saved')$('layoutSavedNote').textContent='';},1400);
+}
+function resetLayouts(){
+  try{
+    localStorage.removeItem(LAYOUT_STORE_KEY);
+    localStorage.removeItem(LEGACY_LAYOUT_KEY);
+    localStorage.removeItem(LEGACY_TABLE_PREFS_KEY);
+  }catch{}
+  datasetStates.forEach(state=>{state.hiddenCols.clear();state.hideCompleted=false;});
+  datasetStates.forEach((_,i)=>{syncTableControls(i);drawRows(i);});
+  renderColumnManager();
+  $('layoutSavedNote').textContent='Reset';
+  setTimeout(()=>{if($('layoutSavedNote').textContent==='Reset')$('layoutSavedNote').textContent='';},1400);
+}
+function loadSavedRequests(){
+  try{
+    const parsed=JSON.parse(localStorage.getItem(SAVED_REQUESTS_KEY)||'[]');
+    return Array.isArray(parsed) ? parsed.filter(x=>x&&typeof x==='object'&&x.id&&x.request) : [];
+  }catch{return [];}
+}
+function saveSavedRequests(items){
+  try{localStorage.setItem(SAVED_REQUESTS_KEY,JSON.stringify(items||[]));}catch{}
+}
+function formatSavedDate(ts){
+  try{return new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric'}).format(new Date(ts));}
+  catch{return new Date(ts).toLocaleDateString('en-GB');}
+}
+function humaniseEndpointSegment(value){
+  let s='';
+  try{s=decodeURIComponent(String(value||''));}catch{s=String(value||'');}
+  s=s.replace(/[-_]+/g,' ').replace(/\s+/g,' ').trim();
+  return s ? s.charAt(0).toUpperCase()+s.slice(1) : '';
+}
+function restEndpointLabel(url){
+  try{
+    const u=new URL(url);
+    const segs=u.pathname.split('/').filter(Boolean);
+    let pick='';
+    const restIndex=segs.findIndex(x=>/^rest(?:[-_]?v(?:ersion)?)?[\d.\-]*$/i.test(x) || /^rest[-_]?v/i.test(x));
+    if(restIndex>=0 && segs[restIndex+1]) pick=segs[restIndex+1];
+    else pick=segs.at(-1)||'';
+    return humaniseEndpointSegment(pick)||'REST endpoint';
+  }catch{return 'REST endpoint';}
+}
+function graphqlTopLevelNames(query){
+  const src=String(query||'');
+  const names=[];
+  const seen=new Set();
+  const isStart=c=>/[A-Za-z_]/.test(c||'');
+  const isName=c=>/[A-Za-z0-9_]/.test(c||'');
+  const skipWs=pos=>{while(pos<src.length && /\s|,/.test(src[pos]))pos++;return pos;};
+  let i=0,brace=0,paren=0,bracket=0,inSelection=false;
+  while(i<src.length){
+    const c=src[i];
+    if(c==='#'){while(i<src.length&&src[i]!=='\n')i++;continue;}
+    if(src.slice(i,i+3)==='"""'){
+      i+=3;while(i<src.length&&src.slice(i,i+3)!=='"""')i++;if(i<src.length)i+=3;continue;
+    }
+    if(c==='"'){
+      i++;let escp=false;while(i<src.length){const x=src[i++];if(escp){escp=false;continue;}if(x==='\\'){escp=true;continue;}if(x==='"')break;}continue;
+    }
+    if(c==='{'){brace++;inSelection=true;i++;continue;}
+    if(c==='}'){brace=Math.max(0,brace-1);i++;continue;}
+    if(!inSelection){i++;continue;}
+    if(c==='('){paren++;i++;continue;}
+    if(c===')'){paren=Math.max(0,paren-1);i++;continue;}
+    if(c==='['){bracket++;i++;continue;}
+    if(c===']'){bracket=Math.max(0,bracket-1);i++;continue;}
+    if(brace===1 && paren===0 && bracket===0){
+      if(src.slice(i,i+3)==='...'){
+        i+=3;i=skipWs(i);while(i<src.length&&isName(src[i]))i++;continue;
+      }
+      if(c==='@'){
+        i++;while(i<src.length&&isName(src[i]))i++;continue;
+      }
+      if(isStart(c)){
+        const a=i;while(i<src.length&&isName(src[i]))i++;
+        let field=src.slice(a,i);
+        let pos=skipWs(i);
+        if(src[pos]===':'){
+          pos=skipWs(pos+1);
+          if(isStart(src[pos])){
+            const b=pos;while(pos<src.length&&isName(src[pos]))pos++;
+            field=src.slice(b,pos);i=pos;
+          }
+        }
+        if(field && !seen.has(field)){seen.add(field);names.push(field);}
+        continue;
+      }
+    }
+    i++;
+  }
+  return names;
+}
+function captureCurrentRequest(){
+  const query=String(CONFIG.request.query||'').trim();
+  if(query){
+    return {
+      kind:'GraphQL',
+      query,
+      customVariables:structuredCloneSafe(CONFIG.request.customVariables||{}),
+      variables:structuredCloneSafe(CONFIG.request.variables||{}),
+      url:String(CONFIG.request.url||'').trim(),
+      method:String(CONFIG.request.method||'AUTO'),
+      params:structuredCloneSafe(CONFIG.request.params||{}),
+      body:null
+    };
+  }
+  return {
+    kind:'REST',
+    url:String(CONFIG.request.url||'').trim(),
+    query:'',
+    customVariables:structuredCloneSafe(CONFIG.request.customVariables||{}),
+    variables:{},
+    method:String(CONFIG.request.method||'AUTO'),
+    params:structuredCloneSafe(CONFIG.request.params||{}),
+    body:CONFIG.request.body==null?null:structuredCloneSafe(CONFIG.request.body)
+  };
+}
+function savedRequestSignature(req){
+  if(req.kind==='GraphQL') return `gql:${hashText(String(req.query||'')+'\n'+JSON.stringify(req.variables||{})+'\n'+JSON.stringify(req.customVariables||{}))}`;
+  return `rest:${hashText([req.method||'AUTO',req.url||'',JSON.stringify(req.params||{}),JSON.stringify(req.body??null),JSON.stringify(req.customVariables||{})].join('\n'))}`;
+}
+function makeSavedRequestLabel(req,ts,responseNames=[]){
+  const date=formatSavedDate(ts);
+  if(req.kind==='GraphQL'){
+    const names=Array.isArray(responseNames)&&responseNames.length ? responseNames : graphqlTopLevelNames(req.query);
+    return `${date} · GraphQL · ${names.length?names.join(', '):'Query'}`;
+  }
+  return `${date} · REST · ${restEndpointLabel(req.url)}`;
+}
+function savedRequestDetails(item){
+  if(item?.request?.kind==='GraphQL') return String(item.request.query||'').replace(/\s+/g,' ').trim().slice(0,500);
+  return String(item?.request?.url||'');
+}
+function renderSavedRequestControl(){
+  const wrap=$('savedRequestWrap'),select=$('savedRequestSelect'),remove=$('removeSavedRequest');
+  if(!wrap || !select || !remove) return;
+  const items=loadSavedRequests().sort((a,b)=>(Number(b.savedAt)||0)-(Number(a.savedAt)||0));
+  if(!items.length){wrap.hidden=true;select.innerHTML='<option value="">Choose a saved request…</option>';remove.disabled=true;activeSavedRequestId='';return;}
+  wrap.hidden=false;
+  select.innerHTML='<option value="">Choose a saved request…</option>'+items.map(item=>`<option value="${esc(item.id)}" title="${esc(savedRequestDetails(item))}">${esc(item.label||makeSavedRequestLabel(item.request,item.savedAt))}</option>`).join('');
+  if(activeSavedRequestId && items.some(x=>x.id===activeSavedRequestId)) select.value=activeSavedRequestId;
+  else{activeSavedRequestId='';select.value='';}
+  const current=items.find(x=>x.id===select.value);
+  select.title=current?savedRequestDetails(current):'Choose a saved REST URL or GraphQL query';
+  remove.disabled=!select.value;
+}
+
+function savedRequestInputText(item){
+  const req=item?.request||{};
+  if(req.kind==='GraphQL'){
+    const vars=req.variables&&typeof req.variables==='object'?req.variables:{};
+    const hasExtras=Object.keys(vars).length || String(req.url||'').trim() || String(req.method||'AUTO').toUpperCase()!=='AUTO';
+    if(hasExtras){
+      const wrapper={};
+      if(String(req.url||'').trim()) wrapper.url=String(req.url);
+      wrapper.query=String(req.query||'');
+      if(Object.keys(vars).length) wrapper.variables=vars;
+      if(String(req.method||'AUTO').toUpperCase()!=='AUTO') wrapper.method=String(req.method);
+      return JSON.stringify(wrapper,null,2);
+    }
+    return String(req.query||'');
+  }
+  const params=req.params&&typeof req.params==='object'&&!Array.isArray(req.params)?req.params:{};
+  const hasExtras=String(req.method||'AUTO').toUpperCase()!=='AUTO' || Object.keys(params).length || req.body!=null;
+  if(hasExtras){
+    const wrapper={url:String(req.url||'')};
+    if(String(req.method||'AUTO').toUpperCase()!=='AUTO') wrapper.method=String(req.method);
+    if(Object.keys(params).length) wrapper.params=params;
+    if(req.body!=null) wrapper.body=req.body;
+    return JSON.stringify(wrapper,null,2);
+  }
+  return String(req.url||'');
+}
+function savedRequestCustomVariablesText(item){
+  const vars=item?.request?.customVariables;
+  return JSON.stringify(vars&&typeof vars==='object'&&!Array.isArray(vars)?vars:{},null,2);
+}
+function saveCurrentRequestFavourite(responseNames=[]){
+  const req=captureCurrentRequest();
+  if(!(req.query||req.url)) return '';
+  const now=Date.now(),sig=savedRequestSignature(req);
+  const items=loadSavedRequests();
+  let item=items.find(x=>x.signature===sig);
+  if(item){
+    item.request=req;item.savedAt=now;item.label=makeSavedRequestLabel(req,now,responseNames);item.signature=sig;
+  }else{
+    item={id:`req_${now.toString(36)}_${Math.random().toString(36).slice(2,8)}`,signature:sig,savedAt:now,label:makeSavedRequestLabel(req,now,responseNames),request:req};
+    items.push(item);
+  }
+  saveSavedRequests(items);
+  activeSavedRequestId=item.id;
+  renderSavedRequestControl();
+  return item.id;
+}
+function removeActiveSavedRequest(){
+  if(!activeSavedRequestId) return;
+  const items=loadSavedRequests();
+  const item=items.find(x=>x.id===activeSavedRequestId);
+  if(!item) return;
+  if(!confirm(`Remove “${item.label}” from saved requests?`)) return;
+  saveSavedRequests(items.filter(x=>x.id!==activeSavedRequestId));
+  activeSavedRequestId='';
+  renderSavedRequestControl();
+}
+
+function isEndDateColumn(path){
+  const leaf=String(path).split('.').at(-1).replace(/[_\-\s]/g,'').toLowerCase();
+  return leaf==='enddate'||leaf==='enddatetime';
+}
+function endValueIsOpen(v,type){
+  if(v===null||v===undefined||String(v).trim()==='') return true;
+  const x=toSortValue(v,type);
+  if(typeof x!=='number'||!Number.isFinite(x)) return true;
+  if(type==='date'){
+    const d=new Date(x);d.setHours(23,59,59,999);return d.getTime()>=Date.now();
+  }
+  return x>=Date.now();
+}
+function rowIsOpen(state,row){
+  if(!state.endDateColumns.length) return true;
+  return state.endDateColumns.some(c=>endValueIsOpen(row[c],state.types.get(c)));
+}
+function showMainLoading(text='Loading data…'){
+  $('tables').innerHTML=`<div class="loadingPanel"><div class="spinner" aria-hidden="true"></div><div>${esc(text)}</div></div>`;
+}
+
+function hasRequestSource(){
+  return !!(String(CONFIG.request.url||'').trim() || String(CONFIG.request.query||'').trim());
+}
+
+function looksLikeHttpUrl(value){
+  try{
+    const u=new URL(String(value||'').trim());
+    return u.protocol==='http:' || u.protocol==='https:';
+  }catch{return false;}
+}
+
+function pad2(value){ return String(value).padStart(2,'0'); }
+function formatLocalDate(date){
+  return `${date.getFullYear()}-${pad2(date.getMonth()+1)}-${pad2(date.getDate())}`;
+}
+function formatLocalDateTime(date){
+  const offsetMinutes=-date.getTimezoneOffset();
+  const sign=offsetMinutes>=0?'+':'-';
+  const absolute=Math.abs(offsetMinutes);
+  const offset=`${sign}${pad2(Math.floor(absolute/60))}:${pad2(absolute%60)}`;
+  return `${formatLocalDate(date)}T${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}${offset}`;
+}
+function addLocalDays(date,days){
+  const out=new Date(date.getTime());
+  out.setDate(out.getDate()+Number(days||0));
+  return out;
+}
+function resolveDynamicCustomVariable(value,now=new Date()){
+  if(typeof value!=='string') return value;
+  const match=value.trim().match(/^@(today|now|monday|tuesday|wednesday|thursday|friday|saturday|sunday)(?:([+-])(\d+)d)?$/i);
+  if(!match) return value;
+  const name=match[1].toLowerCase();
+  const offset=(match[2]? (match[2]==='-'?-1:1)*Number(match[3]||0) : 0);
+  if(name==='now') return formatLocalDateTime(addLocalDays(now,offset));
+  let base=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  if(name!=='today'){
+    const weekdays={sunday:0,monday:1,tuesday:2,wednesday:3,thursday:4,friday:5,saturday:6};
+    const target=weekdays[name];
+    const daysBack=(base.getDay()-target+7)%7;
+    base=addLocalDays(base,-daysBack);
+  }
+  return formatLocalDate(addLocalDays(base,offset));
+}
+function parseCustomVariablesText(text){
+  const raw=String(text||'').trim();
+  if(!raw) return {};
+  let parsed;
+  try{ parsed=JSON.parse(raw); }
+  catch(e){ throw new Error(`Custom variables must be a valid JSON object. ${e.message}`); }
+  if(!parsed || typeof parsed!=='object' || Array.isArray(parsed)) throw new Error('Custom variables must be a JSON object, for example {"startDate":"@friday-7d"}.');
+  return parsed;
+}
+function resolvedCustomVariables(){
+  if(runCustomVariablesSnapshot) return runCustomVariablesSnapshot;
+  const source=CONFIG.request.customVariables;
+  if(!source || typeof source!=='object' || Array.isArray(source)) return {};
+  const now=new Date();
+  const out={};
+  for(const [key,value] of Object.entries(source)) out[key]=resolveDynamicCustomVariable(value,now);
+  return out;
+}
+function substituteCustomVariables(value,context='request'){
+  if(typeof value!=='string') return value;
+  const vars=resolvedCustomVariables();
+  const missing=new Set();
+  const result=value.replace(/\{\{\s*([A-Za-z_][A-Za-z0-9_]*)\s*\}\}/g,(whole,name)=>{
+    if(!hasOwn(vars,name)){missing.add(name);return whole;}
+    const v=vars[name];
+    if(v===null||v===undefined) return '';
+    return typeof v==='object' ? JSON.stringify(v) : String(v);
+  });
+  if(missing.size) throw new Error(`Missing custom variable${missing.size===1?'':'s'} for ${context}: ${[...missing].join(', ')}`);
+  return result;
+}
+function substituteCustomVariablesDeep(value,context='request'){
+  if(typeof value==='string') return substituteCustomVariables(value,context);
+  if(Array.isArray(value)) return value.map(v=>substituteCustomVariablesDeep(v,context));
+  if(value && typeof value==='object'){
+    const out={};
+    for(const [k,v] of Object.entries(value)) out[k]=substituteCustomVariablesDeep(v,context);
+    return out;
+  }
+  return value;
+}
+
+function applyPastedRequest(value){
+  const text=String(value||'').trim();
+  if(!text) throw new Error('Paste an Arbor REST URL or a GraphQL query first.');
+
+  // An absolute HTTP(S) URL is treated as an ordinary REST request and is
+  // fetched exactly as supplied, including any query string already on it.
+  if(looksLikeHttpUrl(text)){
+    CONFIG.request.url=text;
+    CONFIG.request.query='';
+    CONFIG.request.variables={};
+    CONFIG.request.params={};
+    CONFIG.request.body=null;
+    CONFIG.request.method='AUTO';
+    return 'REST';
+  }
+
+  // Also accept a copied request object. customVariables can be included here
+  // for backwards/portable pasting, although the manual screen also exposes them
+  // separately below the main request box for easier editing.
+  try{
+    const parsed=JSON.parse(text);
+    if(parsed && typeof parsed==='object' && !Array.isArray(parsed)){
+      if(parsed.customVariables && typeof parsed.customVariables==='object' && !Array.isArray(parsed.customVariables)) CONFIG.request.customVariables=parsed.customVariables;
+      if(typeof parsed.query==='string'){
+        CONFIG.request.url=typeof parsed.url==='string'?parsed.url:'';
+        CONFIG.request.query=parsed.query;
+        CONFIG.request.variables=(parsed.variables && typeof parsed.variables==='object' && !Array.isArray(parsed.variables)) ? parsed.variables : {};
+        CONFIG.request.params=(parsed.params && typeof parsed.params==='object' && !Array.isArray(parsed.params)) ? parsed.params : {};
+        CONFIG.request.body=null;
+        CONFIG.request.method=typeof parsed.method==='string'?parsed.method:'AUTO';
+        return 'GraphQL';
+      }
+      if(typeof parsed.url==='string' && looksLikeHttpUrl(parsed.url)){
+        CONFIG.request.url=parsed.url;
+        CONFIG.request.query='';
+        CONFIG.request.variables={};
+        CONFIG.request.params=(parsed.params && typeof parsed.params==='object' && !Array.isArray(parsed.params)) ? parsed.params : {};
+        CONFIG.request.body=hasOwn(parsed,'body')?parsed.body:null;
+        CONFIG.request.method=typeof parsed.method==='string'?parsed.method:'AUTO';
+        return 'REST';
+      }
+    }
+  }catch{}
+
+  CONFIG.request.url='';
+  CONFIG.request.query=text;
+  CONFIG.request.variables={};
+  CONFIG.request.params={};
+  CONFIG.request.body=null;
+  CONFIG.request.method='AUTO';
+  return 'GraphQL';
+}
+
+function showRequestPrompt(initialText=''){
+  $('errors').innerHTML='';
+  $('summary').innerHTML='';
+  $('rawBox').hidden=true;
+  $('rawBox').open=false;
+  syncRawButton();
+  lastResponse=null;
+  datasetStates=[];
+  activeSavedRequestId='';
+  pendingSaveRequest=false;
+  setStatus('Waiting for request');
+  $('runBtn').hidden=true;
+  $('editQueryBtn').hidden=true;
+  $('newQueryBtn').hidden=true;
+  const initialCustomVariables=JSON.stringify(CONFIG.request.customVariables&&typeof CONFIG.request.customVariables==='object'&&!Array.isArray(CONFIG.request.customVariables)?CONFIG.request.customVariables:{},null,2);
+  $('tables').innerHTML=`
+    <section class="requestPrompt">
+      <h2>What do you want to fetch?</h2>
+      <p>Paste an Arbor REST URL or a GraphQL query. URLs are fetched as REST; anything else is treated as GraphQL and sent to the configured Arbor GraphQL endpoint.</p>
+      <div id="savedRequestWrap" class="savedRequestWrap" hidden>
+        <label class="savedRequestLabel" for="savedRequestSelect">Saved requests</label>
+        <div class="savedRequestControls"><select id="savedRequestSelect" aria-label="Saved requests"><option value="">Choose a saved request…</option></select><button id="removeSavedRequest" class="btn savedRequestRemove" type="button" title="Remove selected saved request" aria-label="Remove selected saved request" disabled>×</button></div>
+      </div>
+      <label class="fieldLabel" for="requestInput">Query or REST URL</label>
+      <textarea id="requestInput" class="requestInput" spellcheck="false" placeholder="https://broadway-academy.uk.arbor.sc/rest-v2/...\n\nor\n\n{\n  Student(...) {\n    id\n    fullName\n  }\n}">${esc(initialText)}</textarea>
+      <label class="fieldLabel" for="customVariablesInput">Custom variables (optional)</label>
+      <textarea id="customVariablesInput" class="customVarsInput" spellcheck="false" placeholder='{"startDate":"@friday-7d","endDate":"@friday"}'>${esc(initialCustomVariables)}</textarea>
+      <div class="customVarsHelp">Use <strong>{{name}}</strong> in the query or REST URL. Dynamic values: <strong>@today</strong>, <strong>@now</strong>, or <strong>@monday</strong> … <strong>@sunday</strong>. Add/subtract days with forms such as <strong>@today-7d</strong> or <strong>@friday+14d</strong>. Weekdays mean the most recent occurrence, including today.</div>
+      <div id="requestPromptError" class="promptError"></div>
+      <div class="promptActions"><label class="saveRequestToggle"><input id="saveRequestCheck" type="checkbox"> Save this request</label><button id="requestGo" class="btn primary">Run</button></div>
+      <div class="promptHint">Choosing a saved request only puts it in the boxes so you can inspect or edit it first. Tip: Ctrl/⌘ + Enter runs what you pasted.</div>
+    </section>`;
+  const input=$('requestInput'),customInput=$('customVariablesInput'),go=$('requestGo'),err=$('requestPromptError'),saveCheck=$('saveRequestCheck');
+  renderSavedRequestControl();
+  const select=$('savedRequestSelect'),remove=$('removeSavedRequest');
+  if(select) select.onchange=e=>{
+    const id=e.target.value;
+    activeSavedRequestId=id||'';
+    const item=id?loadSavedRequests().find(x=>x.id===id):null;
+    if(item){
+      customInput.value=savedRequestCustomVariablesText(item);
+      input.value=savedRequestInputText(item);
+    }
+    renderSavedRequestControl();
+    input.focus();
+  };
+  if(remove) remove.onclick=removeActiveSavedRequest;
+  const submit=()=>{
+    try{
+      CONFIG.request.customVariables=parseCustomVariablesText(customInput.value);
+      applyPastedRequest(input.value);
+      pendingSaveRequest=!!saveCheck.checked;
+      err.textContent='';
+      run();
+    }
+    catch(e){err.textContent=String(e?.message||e);input.focus();}
+  };
+  go.onclick=submit;
+  const keyboardSubmit=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();submit();}};
+  input.addEventListener('keydown',keyboardSubmit);
+  customInput.addEventListener('keydown',keyboardSubmit);
+  setTimeout(()=>input.focus(),0);
+}
+
+function apiUrl(target){
+  if(!CONFIG.useProxy) return target;
+  const u = new URL(CONFIG.proxyUrl);
+  u.searchParams.set(CONFIG.proxyTargetParam,target);
+  return u.toString();
+}
+
+
+function hashText(value){
+  const text=String(value??'');
+  let h1=0x811c9dc5,h2=0x9e3779b9;
+  for(let i=0;i<text.length;i++){
+    const code=text.charCodeAt(i);
+    h1=Math.imul(h1^code,0x01000193);
+    h2=Math.imul(h2^code,0x85ebca6b);
+  }
+  return `${(h1>>>0).toString(36)}${(h2>>>0).toString(36)}`;
+}
+function normalizeGraphQLForLayout(query){
+  const src=String(query||'');
+  let out='',i=0;
+  while(i<src.length){
+    const c=src[i];
+    if(c==='#'){
+      while(i<src.length && src[i]!=='\n') i++;
+      out+=' ';
+      continue;
+    }
+    if(src.slice(i,i+3)==='"""'){
+      i+=3;
+      while(i<src.length && src.slice(i,i+3)!=='"""') i++;
+      if(i<src.length) i+=3;
+      out+='""';
+      continue;
+    }
+    if(c==='"'){
+      i++;
+      let escaped=false;
+      while(i<src.length){
+        const x=src[i++];
+        if(escaped){escaped=false;continue;}
+        if(x==='\\'){escaped=true;continue;}
+        if(x==='"') break;
+      }
+      out+='""';
+      continue;
+    }
+    const rest=src.slice(i);
+    const number=rest.match(/^-?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?/);
+    if(number){out+='#';i+=number[0].length;continue;}
+    out+=c;i++;
+  }
+  return out
+    .replace(/\s+/g,' ')
+    .replace(/\s*([{}():!,\[\]@$=])\s*/g,'$1')
+    .trim();
+}
+function makeRequestLayoutScope(req){
+  if(req.isGraphQL){
+    const shape=normalizeGraphQLForLayout(CONFIG.request.query||'');
+    return `gql:${hashText(shape)}`;
+  }
+  const u=new URL(req.target);
+  const pathname=(u.pathname.replace(/\/+$/,'')||'/');
+  const method=String(req.options?.method||'GET').toUpperCase();
+  return `rest:${method}:${u.origin}${pathname}`;
+}
+
+function buildTarget(){
+  const q = String(CONFIG.request.query || '').trim();
+  const isGraphQL = !!q;
+  let target = String(CONFIG.request.url || '').trim();
+  if(!target && isGraphQL) target = CONFIG.request.defaultGraphqlUrl;
+  if(!target) throw new Error('CONFIG.request.url is blank.');
+  target=substituteCustomVariables(target,'REST URL');
+  const u = new URL(target);
+  const params=substituteCustomVariablesDeep(CONFIG.request.params || {},'REST parameters');
+  for(const [k,v] of Object.entries(params)){
+    if(v == null) continue;
+    if(Array.isArray(v)) v.forEach(x=>u.searchParams.append(k,String(x)));
+    else u.searchParams.set(k,String(v));
+  }
+  return {target:u.toString(),isGraphQL};
+}
+
+function buildFetch(queryOverride=null){
+  const {target,isGraphQL}=buildTarget();
+  let method=String(CONFIG.request.method||'AUTO').toUpperCase();
+  if(method==='AUTO') method = isGraphQL || CONFIG.request.body != null ? 'POST' : 'GET';
+  const headers = new Headers(CONFIG.request.headers || {});
+  headers.set('Accept','application/json');
+  if(CONFIG.username || CONFIG.password) headers.set('Authorization','Basic '+btoa(`${CONFIG.username}:${CONFIG.password}`));
+  let body;
+  if(isGraphQL){
+    headers.set('Content-Type','application/json');
+    body=JSON.stringify({query:substituteCustomVariables(String(queryOverride ?? CONFIG.request.query),'GraphQL query'),variables:CONFIG.request.variables||{}});
+  } else if(CONFIG.request.body != null && !['GET','HEAD'].includes(method)){
+    if(typeof CONFIG.request.body === 'string') body=substituteCustomVariables(CONFIG.request.body,'request body');
+    else {headers.set('Content-Type','application/json');body=JSON.stringify(substituteCustomVariablesDeep(CONFIG.request.body,'request body'));}
+  }
+  return {url:apiUrl(target),options:{method,headers,body,cache:'no-store'},isGraphQL,target};
+}
+
+async function run(){
+  if(!hasRequestSource()){showRequestPrompt();return;}
+  $('runBtn').hidden=false;
+  $('editQueryBtn').hidden=SOURCE_REQUEST_DEFINED;
+  $('newQueryBtn').hidden=SOURCE_REQUEST_DEFINED;
+  $('errors').innerHTML=''; $('summary').innerHTML=''; $('rawBox').hidden=true; $('rawBox').open=false; syncRawButton(); showMainLoading();
+  setStatus('Loading…'); $('runBtn').disabled=true;
+  runCustomVariablesSnapshot=null;
+  try{
+    runCustomVariablesSnapshot=resolvedCustomVariables();
+    const req=buildFetch();
+    currentRequestLayoutScope=makeRequestLayoutScope(req);
+    touchCurrentLayoutProfile();
+    const first=await fetchJson(req);
+    if(!first.response.ok) showError(`HTTP ${first.response.status} ${first.response.statusText}`,first.json);
+    if(Array.isArray(first.json?.errors) && first.json.errors.length) showGraphQLErrors(first.json.errors,'Initial request');
+
+    let finalJson=first.json;
+    let pageInfo={pagesFetched:1,pagedDatasets:[]};
+    if(req.isGraphQL && CONFIG.pagination?.autoGraphQL && first.json && typeof first.json==='object' && first.json.data && typeof first.json.data==='object'){
+      const paged=await autoPageGraphQL(first.json,req);
+      finalJson=paged.json;
+      pageInfo=paged.info;
+    }
+
+    lastResponse=finalJson; $('raw').textContent=JSON.stringify(finalJson,null,2);
+    const datasets=extractDatasets(finalJson,req.isGraphQL);
+    renderAll(datasets);
+    if(pendingSaveRequest && first.response.ok) saveCurrentRequestFavourite(req.isGraphQL?Object.keys(finalJson?.data||{}):[]);
+    const pagingText=pageInfo.pagesFetched>1 ? ` · ${pageInfo.pagesFetched} page requests` : '';
+    setStatus(`${datasets.length} table${datasets.length===1?'':'s'} · HTTP ${first.response.status}${pagingText}`);
+  }catch(e){ showError('Request failed',e); setStatus('Failed'); }
+  finally{pendingSaveRequest=false;runCustomVariablesSnapshot=null;$('runBtn').disabled=false;}
+}
+
+async function fetchJson(req){
+  const response=await fetch(req.url,req.options);
+  const text=await response.text();
+  let json;
+  try{json=text?JSON.parse(text):null;}catch{throw new Error(`Response was not JSON (HTTP ${response.status}).\n\n${text.slice(0,1500)}`);}
+  return {response,json};
+}
+
+async function autoPageGraphQL(firstJson,baseReq){
+  const cfg=CONFIG.pagination||{};
+  const limit=Number(cfg.pageSize)||3000;
+  const maxPages=Math.max(1,Number(cfg.maxPages)||100);
+  const arg=String(cfg.pageArgument||'page_num');
+  const combined=structuredCloneSafe(firstJson);
+  if(!combined.data || typeof combined.data!=='object') return {json:combined,info:{pagesFetched:1,pagedDatasets:[]}};
+
+  let active=new Set(Object.entries(combined.data)
+    .filter(([,v])=>Array.isArray(v) && v.length===limit)
+    .map(([k])=>k));
+  const initiallyPaged=[...active];
+  if(!active.size) return {json:combined,info:{pagesFetched:1,pagedDatasets:[]}};
+
+  const originalQuery=String(CONFIG.request.query||'');
+  let requests=1;
+  for(let page=1; active.size && page<maxPages; page++){
+    const rewrite=rewriteTopLevelGraphQLPage(originalQuery,active,arg,page);
+    for(const missing of rewrite.missing){
+      active.delete(missing);
+      showPagingWarning(missing,`could not identify the top-level GraphQL field to add ${arg}:${page}`);
+    }
+    if(!active.size) break;
+
+    setStatus(`Loading page ${page+1}… ${[...active].join(', ')}`);
+    const req=buildFetch(rewrite.query);
+    const part=await fetchJson(req);
+    requests++;
+    if(!part.response.ok) showError(`HTTP ${part.response.status} on GraphQL page ${page+1}`,part.json);
+    if(Array.isArray(part.json?.errors) && part.json.errors.length) showGraphQLErrors(part.json.errors,`GraphQL page ${page+1}`);
+
+    const data=part.json?.data;
+    for(const name of [...active]){
+      const next=data?.[name];
+      if(!Array.isArray(next)){
+        active.delete(name);
+        showPagingWarning(name,`page ${page+1} returned ${next==null?'null/no data':'a non-array value'}; kept the pages already loaded`);
+        continue;
+      }
+      combined.data[name].push(...next);
+      if(next.length!==limit) active.delete(name);
+    }
+    if(Array.isArray(part.json?.errors) && part.json.errors.length){
+      combined.errors=[...(combined.errors||[]),...part.json.errors.map(e=>({...e,_page:page+1}))];
+    }
+  }
+
+  if(active.size){
+    for(const name of active) showPagingWarning(name,`stopped after ${maxPages} pages to avoid an accidental endless request loop`);
+  }
+  return {json:combined,info:{pagesFetched:requests,pagedDatasets:initiallyPaged}};
+}
+
+function structuredCloneSafe(value){
+  if(typeof structuredClone==='function') try{return structuredClone(value);}catch{}
+  return JSON.parse(JSON.stringify(value));
+}
+
+function showPagingWarning(name,message){
+  const d=document.createElement('div');d.className='notice warn';
+  d.innerHTML=`<strong>Pagination: ${esc(name)}</strong><div>${esc(message)}</div>`;$('errors').appendChild(d);
+}
+
+// Rewrites only selected TOP-LEVEL GraphQL fields. Other parts of a multipart
+// query remain on their original page and are ignored while extra pages are
+// appended. Aliases are supported: aliasName: FieldName(...) maps to the
+// response key "aliasName".
+function rewriteTopLevelGraphQLPage(query,responseKeys,argName,pageNum){
+  const edits=[];
+  const found=new Set();
+  let i=0,depth=0,inString=false,stringQuote='',escaped=false,inComment=false,selectionStarted=false;
+  const isNameStart=c=>/[A-Za-z_]/.test(c||'');
+  const isName=c=>/[A-Za-z0-9_]/.test(c||'');
+  const skipWs=(pos)=>{while(pos<query.length && /\s|,/.test(query[pos]))pos++;return pos;};
+  const matchParen=(pos)=>{
+    let d=0,s=false,q='',escp=false,comment=false;
+    for(let j=pos;j<query.length;j++){
+      const c=query[j],n=query[j+1];
+      if(comment){if(c==='\n')comment=false;continue;}
+      if(s){if(escp){escp=false;continue;}if(c==='\\'){escp=true;continue;}if(c===q)s=false;continue;}
+      if(c==='#'){comment=true;continue;}
+      if(c==='"' || c==="'"){s=true;q=c;continue;}
+      if(c==='(')d++; else if(c===')'){d--;if(d===0)return j;}
+    }
+    return -1;
+  };
+
+  while(i<query.length){
+    const c=query[i];
+    if(inComment){if(c==='\n')inComment=false;i++;continue;}
+    if(inString){if(escaped){escaped=false;i++;continue;}if(c==='\\'){escaped=true;i++;continue;}if(c===stringQuote)inString=false;i++;continue;}
+    if(c==='#'){inComment=true;i++;continue;}
+    if(c==='"' || c==="'"){inString=true;stringQuote=c;i++;continue;}
+    if(c==='{'){depth++;selectionStarted=true;i++;continue;}
+    if(c==='}'){depth--;i++;continue;}
+    if(!selectionStarted || depth!==1 || !isNameStart(c)){i++;continue;}
+    if(query.slice(Math.max(0,i-3),i)==='...'){i++;continue;}
+
+    const start=i; while(i<query.length && isName(query[i]))i++;
+    const first=query.slice(start,i);
+    let pos=skipWs(i),responseKey=first,fieldEnd=i;
+    if(query[pos]===':'){
+      pos=skipWs(pos+1);
+      if(!isNameStart(query[pos]))continue;
+      const fs=pos;while(pos<query.length&&isName(query[pos]))pos++;
+      responseKey=first;fieldEnd=pos;
+    } else {
+      fieldEnd=i;
+    }
+    if(!responseKeys.has(responseKey)) continue;
+    found.add(responseKey);
+    pos=skipWs(fieldEnd);
+    if(query[pos]==='('){
+      const close=matchParen(pos);if(close<0)continue;
+      const inside=query.slice(pos+1,close);
+      const rx=new RegExp(`(^|[,\\s])${argName}\\s*:\\s*[^,)]*`);
+      if(rx.test(inside)){
+        const updated=inside.replace(rx,(m,prefix)=>`${prefix}${argName}:${pageNum}`);
+        edits.push({a:pos+1,b:close,text:updated});
+      }else{
+        const sep=inside.trim()?', ':'';
+        edits.push({a:close,b:close,text:`${sep}${argName}:${pageNum}`});
+      }
+      i=close+1;
+    }else{
+      edits.push({a:fieldEnd,b:fieldEnd,text:`(${argName}:${pageNum})`});
+    }
+  }
+  let out=query;
+  edits.sort((a,b)=>b.a-a.a).forEach(e=>{out=out.slice(0,e.a)+e.text+out.slice(e.b);});
+  const missing=[...responseKeys].filter(k=>!found.has(k));
+  return {query:out,missing};
+}
+
+function stopMainLoadingOnError(){
+  const panel=$('tables').querySelector('.loadingPanel');
+  if(!panel) return;
+  const spinner=panel.querySelector('.spinner');
+  if(spinner) spinner.remove();
+  const message=panel.querySelector('div');
+  if(message) message.textContent='Unable to load data.';
+}
+function showError(title,detail){
+  stopMainLoadingOnError();
+  const d=document.createElement('div');d.className='notice error';
+  const value=detail instanceof Error?detail.message:JSON.stringify(detail,null,2);
+  d.innerHTML=`<strong>${esc(title)}</strong><pre>${esc(value)}</pre>`;$('errors').appendChild(d);
+}
+function showGraphQLErrors(errors,context='GraphQL'){
+  const d=document.createElement('div');d.className='notice warn';
+  d.innerHTML=`<strong>${esc(context)} returned ${errors.length} error${errors.length===1?'':'s'}.</strong><div>Any successful parts of the response are still shown below.</div><pre>${esc(JSON.stringify(errors,null,2))}</pre>`;$('errors').appendChild(d);
+}
+
+function extractDatasets(json,isGraphQL){
+  if(isGraphQL && json && typeof json==='object' && hasOwn(json,'data')){
+    const data=json.data;
+    if(data && typeof data==='object' && !Array.isArray(data)){
+      return Object.entries(data).map(([name,value])=>makeDataset(name,value));
+    }
+    return [makeDataset('Data',data)];
+  }
+  let root=json;
+  // Common REST wrappers.
+  if(root && typeof root==='object' && !Array.isArray(root)){
+    for(const k of ['data','results','items','records','rows']){
+      if(hasOwn(root,k) && root[k] != null){
+        const v=root[k];
+        if(Array.isArray(v)) return [makeDataset(titleCase(k),v)];
+        if(typeof v==='object' && Object.keys(root).length<=4) {root=v;break;}
+      }
+    }
+  }
+  if(Array.isArray(root)) return [makeDataset('Response',root)];
+  if(root && typeof root==='object'){
+    const arrayEntries=Object.entries(root).filter(([,v])=>Array.isArray(v));
+    if(arrayEntries.length>1) return arrayEntries.map(([k,v])=>makeDataset(k,v));
+  }
+  return [makeDataset('Response',root)];
+}
+
+function makeDataset(name,value){
+  if(value == null) return {name,value,sourceCount:0,rows:[],columns:[],emptyKind:'null'};
+  const sources=Array.isArray(value)?value:[value];
+  if(Array.isArray(value) && value.length===0) return {name,value,sourceCount:0,rows:[],columns:[],emptyKind:'array'};
+  const rows=[];const columnOrder=[];const seenCols=new Set();
+  for(const src0 of sources){
+    const src = (src0 && typeof src0==='object') ? CONFIG.transformRecord(src0,name) : src0;
+    const expanded=flattenToRows(src,'');
+    for(const row of expanded){
+      for(const k of Object.keys(row)) if(!seenCols.has(k)){seenCols.add(k);columnOrder.push(k);}
+      rows.push(row);
+    }
+  }
+  // Keep fields that are genuinely empty across the whole dataset so they remain
+  // discoverable in the column manager, but hide them by default. The exception is
+  // a null/empty *parent* placeholder where the same property expands into nested
+  // fields on other records. In that case the parent is structural, not a real column.
+  // Example: educationalInstitution:null on one row and
+  // educationalInstitution.educationalInstitutionName on another.
+  const emptyColumns=new Set();
+  const usefulColumns=columnOrder.filter(col=>{
+    const hasValue=rows.some(row=>row[col]!==null&&row[col]!==undefined&&row[col]!=='');
+    if(hasValue) return true;
+    const hasDescendants=columnOrder.some(other=>other!==col&&other.startsWith(col+'.'));
+    if(hasDescendants) return false;
+    emptyColumns.add(col);
+    return true;
+  });
+  const usefulSet=new Set(usefulColumns);
+  for(const row of rows){
+    for(const key of Object.keys(row)) if(!usefulSet.has(key)) delete row[key];
+  }
+  return {name,value,sourceCount:sources.length,rows,columns:usefulColumns,emptyColumns,emptyKind:null};
+}
+
+function flattenToRows(value,path){
+  if(value===null || value===undefined) return [{[path || 'value']:null}];
+  if(Array.isArray(value)){
+    if(value.length===0) return [{[path || 'value']:null}];
+    const hasComplex=value.some(v=>v && typeof v==='object');
+    if(!CONFIG.explodeObjectArrays || !hasComplex){
+      return [{[path || 'value']:value.map(v=>formatPrimitive(v)).join(CONFIG.primitiveArraySeparator)}];
+    }
+    let out=[];
+    for(const item of value) out.push(...flattenToRows(item,path));
+    return out.length?out:[{[path || 'value']:null}];
+  }
+  if(typeof value!=='object') return [{[path || 'value']:value}];
+
+  const entries=Object.entries(value);
+  if(entries.length===0) return path?[{[path]:null}]:[{}];
+  let rows=[{}];
+  for(const [key,val] of entries){
+    const childPath=path?`${path}.${key}`:key;
+    const childRows=flattenToRows(val,childPath);
+    const next=[];
+    for(const left of rows){
+      for(const right of childRows){
+        if(next.length>=CONFIG.maxExpandedRowsPerSourceRecord){
+          next.push({...left,[childPath]:'[too many expanded rows]'});break;
+        }
+        next.push({...left,...right});
+      }
+      if(next.length>CONFIG.maxExpandedRowsPerSourceRecord) break;
+    }
+    rows=next;
+  }
+  return rows;
+}
+
+function formatPrimitive(v){
+  if(v==null) return '';
+  if(typeof v==='object') return Object.entries(v).map(([k,x])=>`${k}: ${formatPrimitive(x)}`).join('; ');
+  return String(v);
+}
+
+function shouldHide(path){
+  const low=path.toLowerCase();
+  return CONFIG.hiddenColumns.some(x=>{const q=String(x).toLowerCase();return low===q||low.endsWith('.'+q);});
+}
+
+function titleCase(s){
+  return String(s??'')
+    .replace(/[_-]+/g,' ')
+    .replace(/([a-z0-9])([A-Z])/g,'$1 $2')
+    .replace(/\s+/g,' ').trim()
+    .replace(/\b\w/g,m=>m.toUpperCase())
+    .replace(/\bId\b/g,'ID')
+    .replace(/Datetime\b/gi,'Date/Time');
+}
+
+function baseLabel(path){
+  if(hasOwn(CONFIG.columnRenames,path)) return CONFIG.columnRenames[path];
+  const parts=path.split('.'); const leaf=parts.at(-1); const parent=parts.at(-2);
+  if(hasOwn(CONFIG.columnRenames,leaf)) return CONFIG.columnRenames[leaf];
+  if(/location/i.test(path) && /^(displayName|shortDisplayName)$/i.test(leaf)) return 'Location';
+
+  // Generic naming fields are rarely meaningful in isolation. When they belong
+  // to a nested object, use the owning object's key as the visible heading, e.g.
+  // alternativeProvisionPlacementReason.name -> Alternative Provision Placement Reason
+  // registrationForm.shortName -> Registration Form
+  // coveringStaff.displayName -> Covering Staff
+  if(/^(name|displayName|shortName|shortDisplayName|fullName)$/i.test(leaf) && parent) return titleCase(parent);
+
+  // Keep ordinary nested ID headings compact. Their full meaning is exposed in
+  // the header tooltip, while actual student/staff IDs remain explicitly named.
+  if(/^id$/i.test(leaf)){
+    const kind=getIdLinkKind(path);
+    if(kind==='student') return 'Student ID';
+    if(kind==='staff') return 'Staff ID';
+    return 'ID';
+  }
+  return titleCase(leaf || path);
+}
+
+function columnHeaderTitle(path,label){
+  const parts=String(path||'').split('.').filter(Boolean);
+  const leaf=parts.at(-1)||'';
+  const parent=parts.at(-2)||'';
+  let meaning=label;
+
+  if(/^id$/i.test(leaf) && parent){
+    const kind=getIdLinkKind(path);
+    meaning=kind==='student'?'Student ID':kind==='staff'?'Staff ID':`${titleCase(parent)} ID`;
+  }else if(/^(name|displayName|shortName|shortDisplayName|fullName)$/i.test(leaf) && parent){
+    meaning=`${titleCase(parent)} ${titleCase(leaf)}`;
+  }
+
+  return meaning===path ? meaning : `${meaning}\n${path}`;
+}
+
+function makeLabels(columns){
+  const labels=new Map();const used=new Map();
+  for(const col of columns){
+    let label=baseLabel(col);
+    const key=label.toLowerCase();
+    const count=(used.get(key)||0)+1;used.set(key,count);
+    if(count>1){
+      const parts=col.split('.');const parent=parts.at(-2);
+      label=parent?`${titleCase(parent)} · ${label}`:`${label} ${count}`;
+    }
+    labels.set(col,label);
+  }
+  return labels;
+}
+
+function inferType(path,rows){
+  const values=rows.map(r=>r[path]).filter(v=>v!==null&&v!==undefined&&v!=='');
+  if(!values.length) return 'text';
+  const leaf=path.split('.').at(-1).toLowerCase();
+  if(/(^|_)(id|code)$/.test(leaf)||/id$/.test(leaf)||leaf.includes('upn')) return 'text';
+  if(values.every(v=>typeof v==='boolean'||/^(true|false)$/i.test(String(v)))) return 'boolean';
+  if(values.every(v=>isStrictDateTime(v))) return 'datetime';
+  if(values.every(v=>isStrictDate(v))) return 'date';
+  if(values.every(v=>isNumeric(v))) return 'number';
+  return 'text';
+}
+function isNumeric(v){
+  if(typeof v==='number') return Number.isFinite(v);
+  const s=String(v).trim(); if(!s||!/^[-+]?\d+(?:\.\d+)?$/.test(s)) return false;
+  if(/^0\d+/.test(s)) return false; return Number.isFinite(Number(s));
+}
+function isStrictDate(v){return /^\d{4}-\d{2}-\d{2}$/.test(String(v).trim())||/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(String(v).trim());}
+function isStrictDateTime(v){return /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(String(v).trim())||/^\d{1,2}\/\d{1,2}\/\d{4}[ T]\d{1,2}:\d{2}/.test(String(v).trim());}
+function toSortValue(v,type){
+  if(v==null||v==='') return null;
+  if(type==='number') return Number(v);
+  if(type==='boolean') return /^(true|1|yes)$/i.test(String(v))?1:0;
+  if(type==='date'||type==='datetime'){
+    const s=String(v).trim();
+    const uk=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if(uk) return new Date(+uk[3],+uk[2]-1,+uk[1],+(uk[4]||0),+(uk[5]||0),+(uk[6]||0)).getTime();
+    const t=Date.parse(s);return Number.isNaN(t)?s:t;
+  }
+  return String(v).toLocaleLowerCase();
+}
+function formatCell(v,type,path=''){
+  if(v===null||v===undefined||v==='') return '<span class="null"></span>';
+  const idKind=getIdLinkKind(path);
+  if(idKind==='student' || idKind==='staff'){
+    const id=String(v).trim();
+    const route=idKind==='student'?'student-ui':'staff-ui';
+    const href=`https://broadway-academy.uk.arbor.sc/?/${route}/overview/id/${encodeURIComponent(id)}`;
+    return `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer" title="Open ${idKind} in Arbor">${esc(v)}</a>`;
+  }
+  if(type==='boolean'){const b=typeof v==='boolean'?v:/^(true|1|yes)$/i.test(String(v));return b?'Yes':'No';}
+  if(type==='date'||type==='datetime'){
+    const sort=toSortValue(v,type);if(typeof sort==='number'&&Number.isFinite(sort)){
+      const d=new Date(sort);const opts=type==='date'?{day:'2-digit',month:'2-digit',year:'numeric'}:{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'};
+      return esc(new Intl.DateTimeFormat('en-GB',opts).format(d));
+    }
+  }
+  return esc(v);
+}
+
+function renderAll(datasets){
+  datasetStates=[];$('tables').innerHTML='';
+  let totalRows=0,totalSource=0;
+  datasets.forEach((ds,i)=>{totalRows+=ds.rows.length;totalSource+=ds.sourceCount;renderDataset(ds,i);});
+  $('summary').innerHTML=`<span class="pill">${datasets.length} dataset${datasets.length===1?'':'s'}</span><span class="pill">${totalSource.toLocaleString()} source record${totalSource===1?'':'s'}</span><span class="pill">${totalRows.toLocaleString()} table row${totalRows===1?'':'s'}</span>`;
+}
+
+function renderDataset(ds,index){
+  const state={ds,sortCol:null,sortDir:1,filter:'',types:new Map(),labels:makeLabels(ds.columns),columnOrder:[],hiddenCols:new Set(),endDateColumns:[],hideCompleted:false,collapsed:false,pageSize:500,currentPage:1};datasetStates[index]=state;
+  ds.columns.forEach(c=>state.types.set(c,inferType(c,ds.rows)));
+  state.endDateColumns=ds.columns.filter(isEndDateColumn);
+  state.hideCompleted=state.endDateColumns.length?loadHideCompleted(ds,index):false;
+  applySavedLayout(state,index);
+  const sec=document.createElement('section');sec.className='dataset';sec.id=`ds-${index}`;
+  const expanded=ds.rows.length!==ds.sourceCount?` · expanded to ${ds.rows.length.toLocaleString()} rows`:'';
+  const completedControl=state.endDateColumns.length?`<label class="tableToggle"><input type="checkbox" data-completed="${index}" ${state.hideCompleted?'checked':''}> Hide completed</label>`:'';
+  sec.innerHTML=`<div class="dshead"><button class="collapseBtn" data-collapse="${index}" aria-expanded="true" title="Collapse table"><svg class="chev" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M5 7.5 10 12.5 15 7.5"/></svg></button><h2>${esc(ds.name)}</h2><div class="dsmeta">${ds.sourceCount.toLocaleString()} source record${ds.sourceCount===1?'':'s'}${expanded}</div>${completedControl}<input class="search" type="search" placeholder="Filter this table…" data-search="${index}"><button class="btn" data-csv="${index}">CSV</button></div><div class="datasetBody" data-body="${index}"><div class="pager" data-pager="${index}"><label>Rows <select data-page-size="${index}"><option value="500" selected>500</option><option value="1000">1,000</option><option value="2000">2,000</option><option value="3000">3,000</option><option value="all">All</option></select></label><button class="pageNav" data-page-prev="${index}" title="Previous page" aria-label="Previous page">‹</button><span class="pageInfo" data-page-info="${index}"></span><button class="pageNav" data-page-next="${index}" title="Next page" aria-label="Next page">›</button><span class="pageHint">Display only — sorting and filtering use the full dataset</span></div><div class="tablewrap" data-wrap="${index}"></div></div>`;
+  $('tables').appendChild(sec);
+  sec.querySelector('[data-search]').addEventListener('input',e=>{state.filter=e.target.value.toLocaleLowerCase();state.currentPage=1;drawRows(index);});
+  sec.querySelector('[data-csv]').addEventListener('click',()=>downloadCsv(index));
+  sec.querySelector('[data-collapse]').addEventListener('click',()=>toggleDatasetCollapsed(index));
+  sec.querySelector('[data-page-size]').addEventListener('change',e=>{state.pageSize=e.target.value==='all'?'all':Number(e.target.value);state.currentPage=1;drawRows(index);});
+  sec.querySelector('[data-page-prev]').addEventListener('click',()=>{if(state.currentPage>1){state.currentPage--;drawRows(index);}});
+  sec.querySelector('[data-page-next]').addEventListener('click',()=>{state.currentPage++;drawRows(index);});
+  const completed=sec.querySelector('[data-completed]');
+  if(completed) completed.addEventListener('change',e=>{state.hideCompleted=e.target.checked;state.currentPage=1;saveTablePreference(state,index);drawRows(index);});
+  drawRows(index);
+}
+
+function toggleDatasetCollapsed(index){
+  const state=datasetStates[index],sec=$(`ds-${index}`);if(!state||!sec)return;
+  state.collapsed=!state.collapsed;sec.classList.toggle('collapsed',state.collapsed);
+  const btn=sec.querySelector('[data-collapse]');if(btn){btn.setAttribute('aria-expanded',String(!state.collapsed));btn.title=state.collapsed?'Expand table':'Collapse table';}
+}
+function syncTableControls(index){
+  const state=datasetStates[index],sec=$(`ds-${index}`);if(!state||!sec)return;
+  const cb=sec.querySelector('[data-completed]');if(cb)cb.checked=!!state.hideCompleted;
+}
+
+function drawRows(index){
+  const state=datasetStates[index],ds=state.ds,wrap=document.querySelector(`[data-wrap="${index}"]`),sec=$(`ds-${index}`),pager=sec?.querySelector('[data-pager]');
+  if(ds.emptyKind){if(pager)pager.style.display='none';wrap.innerHTML=`<div class="empty">${ds.emptyKind==='null'?'This part of the response was null.':'This part of the response was an empty array.'}</div>`;return;}
+  if(!ds.columns.length){if(pager)pager.style.display='none';wrap.innerHTML='<div class="empty">No tabular fields were found.</div>';return;}
+  let rows=[...ds.rows];
+  if(state.hideCompleted && state.endDateColumns.length) rows=rows.filter(r=>rowIsOpen(state,r));
+  if(state.filter) rows=rows.filter(r=>ds.columns.some(c=>String(r[c]??'').toLocaleLowerCase().includes(state.filter)));
+  if(state.sortCol){
+    const c=state.sortCol,t=state.types.get(c),dir=state.sortDir;
+    rows.sort((a,b)=>{
+      const av=toSortValue(a[c],t),bv=toSortValue(b[c],t);
+      if(av==null&&bv==null)return 0;if(av==null)return 1;if(bv==null)return -1;
+      if(typeof av==='number'&&typeof bv==='number')return (av-bv)*dir;
+      return String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'})*dir;
+    });
+  }
+  const totalRows=rows.length;
+  if(pager)pager.style.display=totalRows<=500?'none':'';
+  const pageSize=state.pageSize==='all'?Math.max(totalRows,1):state.pageSize;
+  const totalPages=state.pageSize==='all'?1:Math.max(1,Math.ceil(totalRows/pageSize));
+  state.currentPage=Math.min(Math.max(1,state.currentPage),totalPages);
+  const start=state.pageSize==='all'?0:(state.currentPage-1)*pageSize;
+  const end=state.pageSize==='all'?totalRows:Math.min(start+pageSize,totalRows);
+  const pageRows=rows.slice(start,end);
+  const info=sec?.querySelector('[data-page-info]'),prev=sec?.querySelector('[data-page-prev]'),next=sec?.querySelector('[data-page-next]');
+  if(info) info.textContent=totalRows?`${(start+1).toLocaleString()}–${end.toLocaleString()} of ${totalRows.toLocaleString()}`:'0 rows';
+  if(prev) prev.disabled=state.currentPage<=1;
+  if(next) next.disabled=state.currentPage>=totalPages || state.pageSize==='all';
+
+  const cols=state.columnOrder.filter(c=>ds.columns.includes(c));
+  let html='<table class="data"><thead><tr>';
+  cols.forEach(c=>{const type=state.types.get(c),hidden=state.hiddenCols.has(c)?' hiddenCol':'',mark=state.sortCol===c?(state.sortDir===1?' ▲':' ▼'):'',label=state.labels.get(c),tip=columnHeaderTitle(c,label);html+=`<th class="${hidden}" data-sort="${esc(c)}" title="${esc(tip)}">${esc(label)}<span class="type">${type}</span><span class="sortmark">${mark}</span></th>`;});
+  html+='</tr></thead><tbody>';
+  pageRows.forEach(r=>{html+='<tr>';cols.forEach(c=>{const t=state.types.get(c),hidden=state.hiddenCols.has(c)?' hiddenCol':'',cls=(t==='number'?' num':t==='boolean'?' bool':'')+hidden;html+=`<td class="${cls.trim()}">${formatCell(r[c],t,c)}</td>`;});html+='</tr>';});
+  html+='</tbody></table>';wrap.innerHTML=html;
+  wrap.querySelectorAll('th[data-sort]').forEach(th=>th.onclick=()=>{const c=th.dataset.sort;if(state.sortCol===c)state.sortDir*=-1;else{state.sortCol=c;state.sortDir=1;}state.currentPage=1;drawRows(index);});
+}
+
+function downloadCsv(index){
+  const state=datasetStates[index],{ds,labels}=state;
+  const cols=state.columnOrder.filter(c=>ds.columns.includes(c)&&!state.hiddenCols.has(c));
+  const q=v=>'"'+String(v??'').replaceAll('"','""')+'"';
+  const lines=[cols.map(c=>q(labels.get(c))).join(',')];
+  ds.rows.forEach(r=>lines.push(cols.map(c=>q(r[c])).join(',')));
+  const blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${ds.name.replace(/[^a-z0-9_-]+/gi,'_')||'data'}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+function openColumnManager(){
+  if(!datasetStates.length)return;
+  activeManagerDataset=Math.min(activeManagerDataset,datasetStates.length-1);
+  renderDatasetPicker();renderColumnManager();$('columnModal').classList.add('open');$('columnModal').setAttribute('aria-hidden','false');
+}
+function closeColumnManager(){$('columnModal').classList.remove('open');$('columnModal').setAttribute('aria-hidden','true');}
+function renderDatasetPicker(){
+  const picker=$('datasetPicker');
+  if(!datasetStates.length){picker.innerHTML='';return;}
+  picker.innerHTML=datasetStates.map((s,i)=>`<button type="button" class="datasetPick ${i===activeManagerDataset?'active':''}" data-dataset="${i}" title="${esc(s.ds.name)}">${esc(s.ds.name)}</button>`).join('');
+  picker.querySelectorAll('[data-dataset]').forEach(b=>b.onclick=()=>{activeManagerDataset=Number(b.dataset.dataset)||0;renderDatasetPicker();renderColumnManager();});
+}
+function renderColumnManager(){
+  if(!datasetStates.length){$('columnList').innerHTML='';return;}
+  const state=datasetStates[activeManagerDataset];
+  $('columnList').innerHTML=state.columnOrder.map((c,i)=>`<div class="columnItem" draggable="true" data-col="${esc(c)}"><span class="dragHandle" title="Drag to reorder">⋮⋮</span><input type="checkbox" data-colvis="${esc(c)}" ${state.hiddenCols.has(c)?'':'checked'}><div class="columnName"><strong>${esc(state.labels.get(c))}</strong><small>${esc(c)}${state.ds.emptyColumns?.has(c)?' · empty in this response':''}</small></div><div class="moveBtns"><button class="mini" data-up="${esc(c)}" ${i===0?'disabled':''}>↑</button><button class="mini" data-down="${esc(c)}" ${i===state.columnOrder.length-1?'disabled':''}>↓</button></div></div>`).join('');
+  const list=$('columnList');let dragged=null;
+  list.querySelectorAll('[data-colvis]').forEach(cb=>cb.onchange=()=>{const c=cb.dataset.colvis;if(cb.checked)state.hiddenCols.delete(c);else state.hiddenCols.add(c);drawRows(activeManagerDataset);});
+  list.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>moveColumn(activeManagerDataset,b.dataset.up,-1));
+  list.querySelectorAll('[data-down]').forEach(b=>b.onclick=()=>moveColumn(activeManagerDataset,b.dataset.down,1));
+  list.querySelectorAll('.columnItem').forEach(item=>{
+    item.ondragstart=()=>{dragged=item.dataset.col;item.classList.add('dragging');};
+    item.ondragend=()=>{item.classList.remove('dragging');dragged=null;};
+    item.ondragover=e=>e.preventDefault();
+    item.ondrop=e=>{e.preventDefault();const target=item.dataset.col;if(dragged&&dragged!==target)dropColumn(activeManagerDataset,dragged,target);};
+  });
+}
+
+function moveColumn(index,col,delta){
+  const state=datasetStates[index],i=state.columnOrder.indexOf(col),j=i+delta;if(i<0||j<0||j>=state.columnOrder.length)return;
+  [state.columnOrder[i],state.columnOrder[j]]=[state.columnOrder[j],state.columnOrder[i]];drawRows(index);renderColumnManager();
+}
+function dropColumn(index,col,target){
+  const state=datasetStates[index],from=state.columnOrder.indexOf(col),to=state.columnOrder.indexOf(target);if(from<0||to<0)return;
+  state.columnOrder.splice(from,1);state.columnOrder.splice(to,0,col);drawRows(index);renderColumnManager();
+}
+
+$('runBtn').onclick=run;
+$('editQueryBtn').onclick=()=>{
+  if(SOURCE_REQUEST_DEFINED || !hasRequestSource()) return;
+  const current=captureCurrentRequest();
+  showRequestPrompt(savedRequestInputText({request:current}));
+};
+$('newQueryBtn').onclick=()=>{
+  CONFIG.request.url='';
+  CONFIG.request.query='';
+  CONFIG.request.variables={};
+  CONFIG.request.params={};
+  CONFIG.request.body=null;
+  CONFIG.request.method='AUTO';
+  CONFIG.request.customVariables={};
+  showRequestPrompt();
+};
+$('columnsBtn').onclick=openColumnManager;
+$('closeColumns').onclick=closeColumnManager;
+$('columnModal').onclick=e=>{if(e.target===$('columnModal'))closeColumnManager();};
+$('saveLayout').onclick=saveLayouts;
+$('resetLayout').onclick=resetLayouts;
+function syncRawButton(){
+  const on=!$('rawBox').hidden && $('rawBox').open;
+  $('rawBtn').classList.toggle('active',on);
+  $('rawBtn').setAttribute('aria-pressed',on?'true':'false');
+}
+$('rawBtn').onclick=()=>{
+  if(lastResponse==null)return;
+  const turnOn=$('rawBox').hidden || !$('rawBox').open;
+  $('rawBox').hidden=!turnOn;
+  $('rawBox').open=turnOn;
+  syncRawButton();
+};
+$('rawBox').addEventListener('toggle',syncRawButton);
+syncRawButton();
+$('editQueryBtn').hidden=SOURCE_REQUEST_DEFINED || !hasRequestSource();
+$('newQueryBtn').hidden=SOURCE_REQUEST_DEFINED || !hasRequestSource();
+$('runBtn').hidden=!hasRequestSource();
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeColumnManager();});
+if(CONFIG.runOnLoad) run();
+</script>
+</body>
+</html>
