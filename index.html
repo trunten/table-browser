@@ -68,7 +68,9 @@ const CONFIG = {
   // Basic Auth. Keep blank if the endpoint does not use Basic Auth.
   // WARNING: credentials written here are visible to anyone who can read the HTML file.
   username: 'broadway',
-  password: 'dpt_i7f9qcNoy6VyJwhWH8vao902ITRaZsS_orb31c3T6eA',
+  password: '',
+  // password: 'dpt_i7f9qcNoy6VyJwhWH8vao902ITRaZsS_orb31c3T6eA',
+  tokenServiceKey: 'a0d7090ee1ccff70522a340f4a0e8645e5ce90ebc5ba1c15fd2d64e616ba9dd9',
 
   request: {
     // Use a full URL. If this is blank and `query` is present, Arbor's GraphQL URL below is used.
@@ -133,6 +135,26 @@ const CONFIG = {
   runOnLoad: true
 };
 /* ====================================================================== */
+
+let arborCredentialsReady;
+
+function ensureArborCredentials() {
+  return arborCredentialsReady ||= (async () => {
+    const response = await fetch('https://broadway-arbor-token-service.vercel.app/v1/arbor/token', {
+      headers: { Authorization: 'Bearer ' + CONFIG.tokenServiceKey },
+      credentials: 'omit', cache: 'no-store', redirect: 'error',
+      signal: AbortSignal.timeout(60000)
+    });
+    if (!response.ok) throw new Error('Token service: HTTP ' + response.status);
+    const { username, token } = await response.json();
+    if (typeof username !== 'string' || !username || /[:\r\n]/.test(username) ||
+        typeof token !== 'string' || !/^dpt_[A-Za-z0-9_-]+$/.test(token)) {
+      throw new Error('Invalid Arbor credentials received.');
+    }
+    CONFIG.username = username;
+    CONFIG.password = token;
+  })();
+}
 
 const $ = id => document.getElementById(id);
 const SOURCE_REQUEST_DEFINED = !!(String(CONFIG.request.url||'').trim() || String(CONFIG.request.query||'').trim());
@@ -793,6 +815,8 @@ async function run(){
   $('editQueryBtn').hidden=SOURCE_REQUEST_DEFINED;
   $('newQueryBtn').hidden=SOURCE_REQUEST_DEFINED;
   $('errors').innerHTML=''; $('summary').innerHTML=''; $('rawBox').hidden=true; $('rawBox').open=false; syncRawButton(); showMainLoading();
+  setStatus('Fetching Credentials…'); $('runBtn').disabled=true;
+  await ensureArborCredentials();
   setStatus('Loading…'); $('runBtn').disabled=true;
   runCustomVariablesSnapshot=null;
   try{
